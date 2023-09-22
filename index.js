@@ -10,6 +10,16 @@ const app = express()
  * Downloads
  */
 const downloadRouter = express.Router()
+
+const format = {
+  video: 'video',
+  audio: 'audio'
+}
+/**
+ * Available formats
+ * https://github.com/fent/node-ytdl-core#ytdlchooseformatformats-options
+ */
+
 const formatToQualityMap = {
   [format.audio]: 'highestaudio',
   [format.video]: 'highest'
