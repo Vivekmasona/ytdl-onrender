@@ -19,7 +19,6 @@ const format = {
  * Available formats
  * https://github.com/fent/node-ytdl-core#ytdlchooseformatformats-options
  */
-
 const formatToQualityMap = {
   [format.audio]: 'highestaudio',
   [format.video]: 'highest'
@@ -51,16 +50,7 @@ downloadRouter.route('/video').get(async (req, res) => {
       quality: formatToQualityMap[format],
     })
 
-    // Get the content length of the video
-    const contentLength = res.getHeader('content-length')
-
-    // Set the Content-Disposition header
     res.setHeader('Content-Disposition', contentDisposition(filename))
-
-    // Set the Content-Length header
-    res.setHeader('Content-Length', contentLength)
-
-    // Pipe the video stream to the response
     stream.pipe(res)
   } catch (error) {
     if (error.statusCode === 410) {
@@ -74,7 +64,6 @@ downloadRouter.route('/video').get(async (req, res) => {
     return res.status(500).send('Internal server error')
   }
 })
-
 
 /**
  * Info
