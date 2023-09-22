@@ -3,7 +3,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon index.js",
+    "dev": "node index.js",
     "start": "node index.js"
   },
   "dependencies": {
@@ -20,6 +20,6 @@
     "@types/node": "^17.0.31",
     "nodemon": "^2.0.16"
   },
-  "author": "Maciek Sitkowski <msitkowski94@gmail.com> (https://github.com/sitek94)",
+  "author": "vivek masona",
   "license": "MIT"
 }
