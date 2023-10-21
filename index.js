@@ -1,111 +1,33 @@
-import express from 'express'
-import ytdl from 'ytdl-core'
-import ytpl from 'ytpl'
-import filenamify from 'filenamify'
-import contentDisposition from 'content-disposition'
 
-const app = express()
+const express = require('express');
+const app = express();
+const youtubedl = require('youtube-dl');
 
-/**
- * Downloads
- */
-const downloadRouter = express.Router()
-
-const format = {
-  video: 'video',
-  audio: 'audio'
-}
-/**
- * Available formats
- * https://github.com/fent/node-ytdl-core#ytdlchooseformatformats-options
- */
-const formatToQualityMap = {
-  [format.audio]: 'highestaudio',
-  [format.video]: 'highest'
-}
-const allowedFormats = Object.keys(formatToQualityMap)
-
-downloadRouter.route('/video').get(async (req, res) => {
-  const url = req.query['url']
-  const format = req.query['format']
+app.get('/api', (req, res) => {
+  const url = req.query.url; // Get the 'url' query parameter from the request
 
   if (!url) {
-    return res.status(400).send('No URL provided')
+    return res.status(400).send('Missing URL parameter');
   }
 
-  if (!allowedFormats.includes(format)) {
-    return res.status(400).send(`Invalid format provided. Supported formats: ${allowedFormats}`)
-  }
+  const video = youtubedl(url);
 
-  if (!ytdl.validateURL(url)) {
-    return res.status(400).send('Invalid URL')
-  }
+  video.on('info', function(info) {
+    console.log('Download started');
+    console.log('Title:', info.title);
+    console.log('Number of videos in playlist:', info.entries.length);
+  });
 
-  try {
-    const info = await ytdl.getBasicInfo(url)
-    const title = info.videoDetails.title
-    const filename = filenamify(title) + '.mp4'
+  video.on('end', function() {
+    console.log('Download finished');
+    // You can send a response to the client here if needed
+    res.send('Download finished');
+  });
 
-    const stream = ytdl(url, {
-      quality: formatToQualityMap[format],
-    })
+  video.pipe(res); // Pipe the video stream directly to the response
+});
 
-    res.setHeader('Content-Disposition', contentDisposition(filename))
-    stream.pipe(res)
-  } catch (error) {
-    if (error.statusCode === 410) {
-      console.log('Video is unavailable')
-      console.log('URL: ', url)
-      return res.status(410).send({ url, message: 'Video is unavailable' })
-    }
-    console.log('URL: ', url)
-    console.log(error)
-
-    return res.status(500).send('Internal server error')
-  }
-})
-
-/**
- * Info
- */
-const infoRouter = express.Router()
-
-infoRouter.route('/playlist').get(async (req, res) => {
-  const url = req.query['url']
-
-  if (!url) {
-    return res.status(400).send('No URL provided')
-  }
-
-  let id = ''
-  try {
-    id = await ytpl.getPlaylistID(url)
-  } catch {}
-  if (!id || !ytpl.validateID(id)) {
-    return res.status(400).send('Invalid URL')
-  }
-
-  const playlist = await ytpl(url, {
-    /**
-     * Download full playlist
-     * https://github.com/TimeForANinja/node-ytpl#ytplid-options
-     */
-    pages: Infinity,
-  })
-  return res.json(playlist)
-})
-
-// Middlewares
-app.use(express.static('public'))
-app.use(express.json())
-
-// Routes
-app.use('/download', downloadRouter)
-app.use('/info', infoRouter)
-
-const port = process.env.PORT || 8000
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`)
-  console.log(`Visit http://localhost:${port}`)
-})
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
